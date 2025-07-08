@@ -1,106 +1,239 @@
 import 'package:flutter/material.dart';
-import '../models/sensor_data.dart';
-import '../widgets/sensor_card.dart';
-import '../widgets/control_button.dart';
+import 'package:fl_chart/fl_chart.dart';
 
-class DashboardPage extends StatefulWidget {
+class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
-
-  @override
-  State<DashboardPage> createState() => _DashboardPageState();
-}
-
-class _DashboardPageState extends State<DashboardPage> {
-  List<SensorData> sensorList = [
-    SensorData(name: 'pH Air', unit: '', value: 7.2),
-    SensorData(name: 'Suhu Air', unit: '°C', value: 28.5),
-    SensorData(name: 'Kejernihan', unit: 'NTU', value: 5.0),
-    SensorData(name: 'Ketinggian Air', unit: 'cm', value: 120),
-  ];
-
-  List<double> phHistory = [8.0, 6.5, 5.3, 9.8, 9.6, 7.5, 6.4];
-
-  void toggleSensor(int index) {
-    setState(() {
-      sensorList[index].isActive = !sensorList[index].isActive;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F4F6),
+      backgroundColor: const Color(0xFFADE0FB),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              _sectionTitle("Dashboard"),
+              const SizedBox(height: 24),
+
+              // Responsive Sensor Cards
+              Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                alignment: WrapAlignment.center,
+                children: const [
+                  SensorCard(title: "pH Air", value: "9", unit: "Netral"),
+                  SensorCard(title: "Suhu Air", value: "28.5", unit: "°C"),
+                  SensorCard(title: "TDS", value: "450", unit: "ppm"),
+                  SensorCard(title: "Water Level", value: "95", unit: "%"),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              const Center(child: ControlToggle(title: "Pompa Air")),
+              const SizedBox(height: 32),
+
+              _sectionTitle("Grafik Tren Sensor (7 Hari Terakhir)"),
+              const SizedBox(height: 16),
+
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.blue.shade700,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Hello!',
-                        style:
-                            TextStyle(color: Colors.white70, fontSize: 14)),
-                    SizedBox(height: 4),
-                    Text('Monitoring Dashboard',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold)),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: Text('Pantauan Terkini',
-                    style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 16,
-                runSpacing: 16,
-                children: List.generate(sensorList.length, (index) {
-                  final sensor = sensorList[index];
-                  return Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SensorCard(data: sensor),
-                      ControlButton(
-                        label: sensor.name,
-                        isOn: sensor.isActive,
-                        onToggle: () => toggleSensor(index),
-                      ),
-                    ],
-                  );
-                }),
-              ),
-              const SizedBox(height: 24),
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Riwayat pemantauan level pH 7 hari terakhir',
-                  style: TextStyle(fontSize: 14),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                height: 200,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                child: LineChartWidget(data: phHistory),
+                child: AspectRatio(
+                  aspectRatio: 1.7,
+                  child: LineChart(
+                    LineChartData(
+                      gridData: FlGridData(show: true),
+                      titlesData: FlTitlesData(
+                        leftTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 40,
+                            getTitlesWidget: (value, _) =>
+                                Text(value.toInt().toString()),
+                          ),
+                        ),
+                        bottomTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            getTitlesWidget: (value, _) {
+                              const labels = ['1', '2', '3', '4', '5'];
+                              return Text("Hari ${labels[value.toInt() - 1]}",
+                                  style: const TextStyle(fontSize: 10));
+                            },
+                            interval: 1,
+                          ),
+                        ),
+                      ),
+                      borderData: FlBorderData(
+                        show: true,
+                        border: const Border(
+                          left: BorderSide(),
+                          bottom: BorderSide(),
+                        ),
+                      ),
+                      lineBarsData: [
+                        LineChartBarData(
+                          isCurved: false,
+                          color: Colors.cyan,
+                          barWidth: 3,
+                          belowBarData: BarAreaData(show: false),
+                          dotData: FlDotData(show: true),
+                          spots: const [
+                            FlSpot(1, 23),
+                            FlSpot(2, 30),
+                            FlSpot(3, 45),
+                            FlSpot(4, 50),
+                            FlSpot(5, 95),
+                          ],
+                        ),
+                        LineChartBarData(
+                          isCurved: false,
+                          color: Colors.lightBlue,
+                          barWidth: 3,
+                          belowBarData: BarAreaData(show: false),
+                          dotData: FlDotData(show: true),
+                          spots: const [
+                            FlSpot(1, 15),
+                            FlSpot(2, 20),
+                            FlSpot(3, 28),
+                            FlSpot(4, 45),
+                            FlSpot(5, 55),
+                          ],
+                        ),
+                        LineChartBarData(
+                          isCurved: false,
+                          color: Colors.blue,
+                          barWidth: 3,
+                          belowBarData: BarAreaData(show: false),
+                          dotData: FlDotData(show: true),
+                          spots: const [
+                            FlSpot(1, 10),
+                            FlSpot(2, 18),
+                            FlSpot(3, 40),
+                            FlSpot(4, 35),
+                            FlSpot(5, 50),
+                          ],
+                        ),
+                        LineChartBarData(
+                          isCurved: false,
+                          color: Colors.indigo,
+                          barWidth: 3,
+                          belowBarData: BarAreaData(show: false),
+                          dotData: FlDotData(show: true),
+                          spots: const [
+                            FlSpot(1, 25),
+                            FlSpot(2, 35),
+                            FlSpot(3, 50),
+                            FlSpot(4, 60),
+                            FlSpot(5, 100),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _sectionTitle(String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+}
+
+class SensorCard extends StatefulWidget {
+  final String title;
+  final String value;
+  final String unit;
+
+  const SensorCard({
+    super.key,
+    required this.title,
+    required this.value,
+    required this.unit,
+  });
+
+  @override
+  State<SensorCard> createState() => _SensorCardState();
+}
+
+class _SensorCardState extends State<SensorCard>
+    with SingleTickerProviderStateMixin {
+  double _scale = 1.0;
+
+  void _onTapDown(_) => setState(() => _scale = 0.95);
+  void _onTapUp(_) => setState(() => _scale = 1.0);
+
+  @override
+  Widget build(BuildContext context) {
+    double progress = double.tryParse(widget.value)! / 100;
+    return GestureDetector(
+      onTapDown: _onTapDown,
+      onTapUp: _onTapUp,
+      onTapCancel: () => setState(() => _scale = 1.0),
+      child: AnimatedScale(
+        scale: _scale,
+        duration: const Duration(milliseconds: 150),
+        child: Container(
+          width: 130,
+          height: 130,
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black12,
+                blurRadius: 6,
+                offset: Offset(0, 4),
+              )
+            ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(widget.title,
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  CircularProgressIndicator(
+                    value: progress > 1 ? 1 : progress,
+                    strokeWidth: 8,
+                    color: Colors.cyan,
+                    backgroundColor: Colors.grey.shade300,
+                  ),
+                  Column(
+                    children: [
+                      Text(widget.value,
+                          style: const TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.bold)),
+                      Text(widget.unit,
+                          style: const TextStyle(fontSize: 12)),
+                    ],
+                  ),
+                ],
               ),
             ],
           ),
@@ -110,52 +243,56 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 }
 
-// Dummy chart
-class LineChartWidget extends StatelessWidget {
-  final List<double> data;
+class ControlToggle extends StatefulWidget {
+  final String title;
+  const ControlToggle({super.key, required this.title});
 
-  const LineChartWidget({super.key, required this.data});
+  @override
+  State<ControlToggle> createState() => _ControlToggleState();
+}
+
+class _ControlToggleState extends State<ControlToggle> {
+  bool isOn = false;
+  double _scale = 1.0;
+
+  void _onTapDown(_) => setState(() => _scale = 0.95);
+  void _onTapUp(_) => setState(() => _scale = 1.0);
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      size: Size.infinite,
-      painter: LineChartPainter(data),
+    return Column(
+      children: [
+        Text(widget.title,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTapDown: _onTapDown,
+          onTapUp: (details) {
+            _onTapUp(details);
+            setState(() => isOn = !isOn);
+          },
+          onTapCancel: () => setState(() => _scale = 1.0),
+          child: AnimatedScale(
+            scale: _scale,
+            duration: const Duration(milliseconds: 150),
+            child: Container(
+              width: 120,
+              height: 45,
+              decoration: BoxDecoration(
+                color: isOn ? Colors.green : Colors.red,
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Center(
+                child: Text(
+                  isOn ? "ON" : "OFF",
+                  style: const TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
-}
-
-class LineChartPainter extends CustomPainter {
-  final List<double> data;
-
-  LineChartPainter(this.data);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paintLine = Paint()
-      ..color = Colors.orange
-      ..strokeWidth = 2;
-
-    final paintPoint = Paint()
-      ..color = Colors.orange
-      ..style = PaintingStyle.fill;
-
-    final maxVal = 14.0;
-    final spacing = size.width / (data.length - 1);
-
-    for (int i = 0; i < data.length - 1; i++) {
-      final p1 = Offset(i * spacing, size.height * (1 - data[i] / maxVal));
-      final p2 =
-          Offset((i + 1) * spacing, size.height * (1 - data[i + 1] / maxVal));
-      canvas.drawLine(p1, p2, paintLine);
-      canvas.drawCircle(p1, 4, paintPoint);
-    }
-
-    final lastPoint = Offset((data.length - 1) * spacing,
-        size.height * (1 - data.last / maxVal));
-    canvas.drawCircle(lastPoint, 4, paintPoint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

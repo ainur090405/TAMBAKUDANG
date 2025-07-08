@@ -1,21 +1,19 @@
 import 'package:flutter/material.dart';
 
-class SensorCard extends StatelessWidget {
+class MiniChartCard extends StatelessWidget {
   final String title;
-  final String value;
-  final String unit;
+  final String currentValue;
 
-  const SensorCard({
+  const MiniChartCard({
     super.key,
     required this.title,
-    required this.value,
-    required this.unit,
+    required this.currentValue,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 90,
+      width: 160,
       height: 120,
       decoration: BoxDecoration(
         color: Colors.white,
@@ -23,12 +21,16 @@ class SensorCard extends StatelessWidget {
       ),
       padding: const EdgeInsets.all(8),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(fontSize: 14)),
+          Text("$title: $currentValue", style: const TextStyle(fontSize: 12)),
           const SizedBox(height: 8),
-          Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-          Text(unit, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+          Expanded(
+            child: Container(
+              color: Colors.blue[50],
+              child: const Center(child: Text("Chart")),
+            ),
+          ),
         ],
       ),
     );
