@@ -58,14 +58,14 @@ class SettingsPage extends StatelessWidget {
                           runSpacing: 16,
                           alignment: WrapAlignment.center,
                           children: [
-                            _AnimatedInputField("Minimum pH Air:", inputDecoration, labelStyle),
-                            _AnimatedInputField("Maksimum pH Air:", inputDecoration, labelStyle),
-                            _AnimatedInputField("Minimum Suhu Air:", inputDecoration, labelStyle),
-                            _AnimatedInputField("Maksimum Suhu Air:", inputDecoration, labelStyle),
-                            _AnimatedInputField("Minimum TDS:", inputDecoration, labelStyle),
-                            _AnimatedInputField("Maksimum TDS:", inputDecoration, labelStyle),
-                            _AnimatedInputField("Minimum Water Level:", inputDecoration, labelStyle),
-                            _AnimatedInputField("Maksimum Water Level:", inputDecoration, labelStyle),
+                            AnimatedInputField("Minimum pH Air:", inputDecoration, labelStyle),
+                            AnimatedInputField("Maksimum pH Air:", inputDecoration, labelStyle),
+                            AnimatedInputField("Minimum Suhu Air:", inputDecoration, labelStyle),
+                            AnimatedInputField("Maksimum Suhu Air:", inputDecoration, labelStyle),
+                            AnimatedInputField("Minimum TDS:", inputDecoration, labelStyle),
+                            AnimatedInputField("Maksimum TDS:", inputDecoration, labelStyle),
+                            AnimatedInputField("Minimum Water Level:", inputDecoration, labelStyle),
+                            AnimatedInputField("Maksimum Water Level:", inputDecoration, labelStyle),
                           ],
                         ),
 
@@ -131,18 +131,18 @@ class SettingsPage extends StatelessWidget {
 }
 
 /// Widget input field yang diberi animasi saat disentuh
-class _AnimatedInputField extends StatefulWidget {
+class AnimatedInputField extends StatefulWidget {
   final String label;
   final InputDecoration decoration;
   final TextStyle style;
 
-  const _AnimatedInputField(this.label, this.decoration, this.style, {super.key});
+  const AnimatedInputField(this.label, this.decoration, this.style, {super.key});
 
   @override
-  State<_AnimatedInputField> createState() => _AnimatedInputFieldState();
+  State<AnimatedInputField> createState() => _AnimatedInputFieldState();
 }
 
-class _AnimatedInputFieldState extends State<_AnimatedInputField> {
+class _AnimatedInputFieldState extends State<AnimatedInputField> {
   double _scale = 1.0;
 
   void _onTapDown(_) => setState(() => _scale = 0.97);

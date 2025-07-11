@@ -86,7 +86,7 @@ class DataSensorPage extends StatelessWidget {
                       scrollDirection: Axis.horizontal,
                       child: DataTable(
                         headingRowColor:
-                            MaterialStateProperty.all(Colors.grey.shade300),
+                            WidgetStateProperty.all(Colors.blue),
                         columns: const [
                           DataColumn(label: Text("Waktu")),
                           DataColumn(label: Text("pH Air")),
