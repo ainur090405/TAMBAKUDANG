@@ -139,6 +139,38 @@ class DashboardPage extends StatelessWidget {
                   ),
                 ),
               ),
+
+              const SizedBox(height: 32),
+
+              _sectionTitle("Notifikasi"),
+              const SizedBox(height: 16),
+
+              // Notifikasi List
+              const NotificationCard(
+                color: Color(0xFFD6F0FA),
+                iconColor: Colors.blue,
+                icon: Icons.info,
+                message: "TDS (400) dalam batas normal.",
+                time: "07/07/2025, 9:24:30 PM - TDS",
+              ),
+              SizedBox(height: 8),
+              const NotificationCard(
+                color: Color(0xFFFFF7E5),
+                iconColor: Colors.orange,
+                icon: Icons.warning,
+                message:
+                    "pH (6.6) mendekati batas. Batas: 6.5-8.5. Perlu perhatian!",
+                time: "07/07/2025, 9:24:30 PM - pH",
+              ),
+              SizedBox(height: 8),
+              const NotificationCard(
+                color: Color(0xFFFFE5E5),
+                iconColor: Colors.red,
+                icon: Icons.error,
+                message:
+                    "Suhu Air (40) di luar batas. Batas: 39. Segera periksa!",
+                time: "07/07/2025, 9:24:30 PM - Suhu Air",
+              ),
             ],
           ),
         ),
@@ -293,6 +325,72 @@ class _ControlToggleState extends State<ControlToggle> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class NotificationCard extends StatelessWidget {
+  final Color color;
+  final Color iconColor;
+  final IconData icon;
+  final String message;
+  final String time;
+
+  const NotificationCard({
+    super.key,
+    required this.color,
+    required this.iconColor,
+    required this.icon,
+    required this.message,
+    required this.time,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.black12),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: iconColor),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  message,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  time,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.black54,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
