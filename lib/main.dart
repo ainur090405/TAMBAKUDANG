@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart'; 
 import 'pages/dashboard_page.dart';
 import 'pages/data_sensor_page.dart';
 import 'pages/report_page.dart';
 import 'pages/setting_page.dart';
+import 'services/mqtt_provider.dart';
 
 void main() {
-  runApp(const MonitoringTambakApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => MQTTProvider(),
+      child: const MonitoringTambakApp(),
+    ),
+  );
 }
 
 class MonitoringTambakApp extends StatelessWidget {
@@ -33,7 +40,6 @@ class MainNavigation extends StatefulWidget {
 
 class _MainNavigationState extends State<MainNavigation> {
   int _currentIndex = 0;
-
   final List<Widget> _pages = const [
     DashboardPage(),
     DataSensorPage(),
@@ -44,91 +50,45 @@ class _MainNavigationState extends State<MainNavigation> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
+      body: Row(
         children: [
-          // Navbar atas (Logo + Judul)
           Container(
-            height: 60,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              border: Border(
-                bottom: BorderSide(color: Colors.black, width: 1),
-              ),
-            ),
-            child: Row(
+            width: 80,
+            color: Colors.white,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Image.asset(
-                  'assets/images/logo_pens.png',
-                  height: 36,
+                IconButton(
+                  icon: Icon(Icons.dashboard,
+                      color: _currentIndex == 0 ? Colors.blue : Colors.grey),
+                  onPressed: () => setState(() => _currentIndex = 0),
                 ),
-                const SizedBox(width: 10),
-                const Text(
-                  'MONITORING TAMBAK UDANG',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    fontFamily: 'Georgia',
-                  ),
+                const SizedBox(height: 20),
+                IconButton(
+                  icon: Icon(Icons.speed,
+                      color: _currentIndex == 1 ? Colors.blue : Colors.grey),
+                  onPressed: () => setState(() => _currentIndex = 1),
+                ),
+                const SizedBox(height: 20),
+                IconButton(
+                  icon: Icon(Icons.insert_chart,
+                      color: _currentIndex == 2 ? Colors.blue : Colors.grey),
+                  onPressed: () => setState(() => _currentIndex = 2),
+                ),
+                const SizedBox(height: 20),
+                IconButton(
+                  icon: Icon(Icons.settings,
+                      color: _currentIndex == 3 ? Colors.blue : Colors.grey),
+                  onPressed: () => setState(() => _currentIndex = 3),
                 ),
               ],
             ),
           ),
-
-          // Body utama: Sidebar kiri + konten
+          const VerticalDivider(thickness: 1, width: 1),
           Expanded(
-            child: Row(
-              children: [
-                // Sidebar kiri
-                Container(
-                  width: 80,
-                  color: Colors.white,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        children: [
-                          const SizedBox(height: 40),
-                          IconButton(
-                            icon: const Icon(Icons.dashboard),
-                            onPressed: () => setState(() => _currentIndex = 0),
-                          ),
-                          const SizedBox(height: 20),
-                          IconButton(
-                            icon: const Icon(Icons.speed),
-                            onPressed: () => setState(() => _currentIndex = 1),
-                          ),
-                          const SizedBox(height: 20),
-                          IconButton(
-                            icon: const Icon(Icons.insert_chart),
-                            onPressed: () => setState(() => _currentIndex = 2),
-                          ),
-                          const SizedBox(height: 20),
-                          IconButton(
-                            icon: const Icon(Icons.settings),
-                            onPressed: () => setState(() => _currentIndex = 3),
-                          ),
-                        ],
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 20),
-                        child: IconButton(
-                          icon: const Icon(Icons.power_settings_new),
-                          onPressed: () {},
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Konten utama
-                Expanded(
-                  child: IndexedStack(
-                    index: _currentIndex,
-                    children: _pages,
-                  ),
-                ),
-              ],
+            child: IndexedStack(
+              index: _currentIndex,
+              children: _pages,
             ),
           ),
         ],

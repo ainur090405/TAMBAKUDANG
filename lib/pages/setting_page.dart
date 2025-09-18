@@ -1,173 +1,95 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../services/mqtt_provider.dart';
 
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
 
   @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  final _minPhController = TextEditingController();
+  final _maxPhController = TextEditingController();
+  final _minSuhuController = TextEditingController();
+  final _maxSuhuController = TextEditingController();
+  final _minDoController = TextEditingController();
+  final _maxDoController = TextEditingController();
+
+  @override
+  void dispose() {
+    _minPhController.dispose();
+    _maxPhController.dispose();
+    _minSuhuController.dispose();
+    _maxSuhuController.dispose();
+    _minDoController.dispose();
+    _maxDoController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final TextStyle labelStyle = const TextStyle(fontSize: 14, fontWeight: FontWeight.w500);
-    final InputDecoration inputDecoration = InputDecoration(
-      hintText: "Tulis",
-      filled: true,
-      fillColor: Colors.white,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-    );
+    final mqttProvider = Provider.of<MQTTProvider>(context, listen: false);
+
+    void _saveSettings() {
+      if (_minPhController.text.isNotEmpty) mqttProvider.publish('settings/ph_min', _minPhController.text);
+      if (_maxPhController.text.isNotEmpty) mqttProvider.publish('settings/ph_max', _maxPhController.text);
+      if (_minSuhuController.text.isNotEmpty) mqttProvider.publish('settings/suhu_min', _minSuhuController.text);
+      if (_maxSuhuController.text.isNotEmpty) mqttProvider.publish('settings/suhu_max', _maxSuhuController.text);
+      if (_minDoController.text.isNotEmpty) mqttProvider.publish('settings/do_min', _minDoController.text);
+      if (_maxDoController.text.isNotEmpty) mqttProvider.publish('settings/do_max', _maxDoController.text);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Pengaturan berhasil dikirim!')),
+      );
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFF9DD7FA),
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Judul
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Text(
-                      "Pengaturan",
-                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Box Form
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text("Batas Sensor",
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 16),
-
-                        Wrap(
-                          spacing: 16,
-                          runSpacing: 16,
-                          alignment: WrapAlignment.center,
-                          children: [
-                            AnimatedInputField("Minimum pH Air:", inputDecoration, labelStyle),
-                            AnimatedInputField("Maksimum pH Air:", inputDecoration, labelStyle),
-                            AnimatedInputField("Minimum Suhu Air:", inputDecoration, labelStyle),
-                            AnimatedInputField("Maksimum Suhu Air:", inputDecoration, labelStyle),
-                            AnimatedInputField("Minimum TDS:", inputDecoration, labelStyle),
-                            AnimatedInputField("Maksimum TDS:", inputDecoration, labelStyle),
-                            AnimatedInputField("Minimum Water Level:", inputDecoration, labelStyle),
-                            AnimatedInputField("Maksimum Water Level:", inputDecoration, labelStyle),
-                          ],
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        // Tombol Simpan
-                        Center(
-                          child: ElevatedButton(
-                            onPressed: () {
-                              showDialog(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16)),
-                                  title: const Text("Batas sensor tersimpan",
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold, fontSize: 18)),
-                                  content: const Text(
-                                    "Data berhasil disimpan.\nTekan OK untuk melanjutkan.",
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  actionsAlignment: MainAxisAlignment.center,
-                                  actions: [
-                                    ElevatedButton(
-                                      onPressed: () => Navigator.of(context).pop(),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: const Color(0xFF9DD7FA),
-                                        foregroundColor: Colors.white,
-                                        elevation: 4,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(8),
-                                        ),
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 24, vertical: 10),
-                                      ),
-                                      child: const Text("OK", style: TextStyle(fontSize: 16)),
-                                    )
-                                  ],
-                                ),
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.greenAccent,
-                              foregroundColor: Colors.black,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12)),
-                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                            ),
-                            child: const Text("Simpan"),
-                          ),
-                        )
-                      ],
-                    ),
-                  )
-                ],
+      appBar: AppBar(title: const Text("Pengaturan Batas Sensor")),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildTextField(_minPhController, "Minimum pH Air"),
+              _buildTextField(_maxPhController, "Maksimum pH Air"),
+              const Divider(height: 32),
+              _buildTextField(_minSuhuController, "Minimum Suhu Air (°C)"),
+              _buildTextField(_maxSuhuController, "Maksimum Suhu Air (°C)"),
+              const Divider(height: 32),
+              _buildTextField(_minDoController, "Minimum DO (mg/L)"),
+              _buildTextField(_maxDoController, "Maksimum DO (mg/L)"),
+              const SizedBox(height: 24),
+              Center(
+                child: ElevatedButton(
+                  onPressed: _saveSettings,
+                  child: const Text("Simpan Pengaturan"),
+                ),
               ),
-            );
-          },
+            ],
+          ),
         ),
       ),
     );
   }
-}
 
-/// Widget input field yang diberi animasi saat disentuh
-class AnimatedInputField extends StatefulWidget {
-  final String label;
-  final InputDecoration decoration;
-  final TextStyle style;
-
-  const AnimatedInputField(this.label, this.decoration, this.style, {super.key});
-
-  @override
-  State<AnimatedInputField> createState() => _AnimatedInputFieldState();
-}
-
-class _AnimatedInputFieldState extends State<AnimatedInputField> {
-  double _scale = 1.0;
-
-  void _onTapDown(_) => setState(() => _scale = 0.97);
-  void _onTapUp(_) => setState(() => _scale = 1.0);
-  void _onTapCancel() => setState(() => _scale = 1.0);
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: _onTapDown,
-      onTapUp: _onTapUp,
-      onTapCancel: _onTapCancel,
-      child: AnimatedScale(
-        scale: _scale,
-        duration: const Duration(milliseconds: 120),
-        child: SizedBox(
-          width: 250,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(widget.label, style: widget.style),
-              const SizedBox(height: 4),
-              TextField(decoration: widget.decoration),
-            ],
-          ),
+  Widget _buildTextField(TextEditingController controller, String label) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: TextField(
+        controller: controller,
+        keyboardType: TextInputType.number,
+        decoration: InputDecoration(
+          labelText: label,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
     );

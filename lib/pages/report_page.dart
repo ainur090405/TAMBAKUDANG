@@ -1,256 +1,132 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../services/mqtt_provider.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:pdf/widgets.dart' as pw_widgets show TableHelper;
 import 'package:printing/printing.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:csv/csv.dart';
+import 'package:intl/intl.dart';
 
-class ReportPage extends StatefulWidget {
+class ReportPage extends StatelessWidget {
   const ReportPage({super.key});
 
   @override
-  State<ReportPage> createState() => _ReportPageState();
-}
+  Widget build(BuildContext context) {
+    final mqttData = Provider.of<MQTTProvider>(context, listen: false);
 
-class _ReportPageState extends State<ReportPage> {
-  final List<Map<String, String>> sensorData = [
-    {'sensor': 'pH', 'checkin': '08:00', 'checkout': '12:00'},
-    {'sensor': 'Suhu', 'checkin': '09:00', 'checkout': '13:00'},
-    {'sensor': 'Kejernihan', 'checkin': '10:00', 'checkout': '14:00'},
-  ];
+    Future<void> exportToCSV() async {
+      List<List<String>> rows = [
+        ["Waktu", "pH", "Suhu (°C)", "DO (mg/L)", "Level Air (%)"] 
+      ];
+      for (var log in mqttData.logHistory) {
+        rows.add([
+          DateFormat('yyyy-MM-dd HH:mm:ss').format(log.timestamp),
+          log.ph.toStringAsFixed(2),
+          log.suhu.toStringAsFixed(2),
+          log.doValue.toStringAsFixed(2), 
+          log.waterLevel.toStringAsFixed(0),
+        ]);
+      }
 
-  String searchQuery = "";
+      String csv = const ListToCsvConverter().convert(rows);
+      final directory = await getApplicationDocumentsDirectory();
+      final path = "${directory.path}/laporan_sensor.csv";
+      final file = File(path);
+      await file.writeAsString(csv);
 
-  List<Map<String, String>> get filteredData {
-    if (searchQuery.isEmpty) return sensorData;
-    return sensorData
-        .where((data) =>
-            data['sensor']!.toLowerCase().contains(searchQuery.toLowerCase()))
-        .toList();
-  }
-
-  Future<void> exportToCSV() async {
-    List<List<String>> rows = [
-      ["No", "Data Sensor", "Check-in", "Check-out"]
-    ];
-    for (int i = 0; i < filteredData.length; i++) {
-      rows.add([
-        (i + 1).toString(),
-        filteredData[i]['sensor']!,
-        filteredData[i]['checkin']!,
-        filteredData[i]['checkout']!,
-      ]);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('CSV berhasil diekspor ke $path')),
+      );
     }
 
-    String csv = const ListToCsvConverter().convert(rows);
-    final directory = await getApplicationDocumentsDirectory();
-    final path = "${directory.path}/laporan_sensor.csv";
-    final file = File(path);
-    await file.writeAsString(csv);
+    Future<void> exportToPDF() async {
+      final pdf = pw.Document();
+      pdf.addPage(
+        pw.Page(
+          build: (pw.Context context) {
+            return pw.TableHelper.fromTextArray(
+              headers: ["Waktu", "pH", "Suhu", "DO", "Level"], 
+              data: mqttData.logHistory.map((log) {
+                return [
+                  DateFormat('yy-MM-dd HH:mm').format(log.timestamp),
+                  log.ph.toStringAsFixed(2),
+                  log.suhu.toStringAsFixed(2),
+                  log.doValue.toStringAsFixed(2), 
+                  log.waterLevel.toStringAsFixed(0),
+                ];
+              }).toList(),
+            );
+          },
+        ),
+      );
+      await Printing.layoutPdf(onLayout: (format) async => pdf.save());
+    }
 
-    if (!mounted) return; // ✅ perbaikan context async
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('CSV berhasil diekspor ke $path')),
-    );
-  }
+    void showExportDialog() {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text("Ekspor Data"),
+          content: const Text("Pilih format file."),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                exportToCSV();
+              },
+              child: const Text("CSV"),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                exportToPDF();
+              },
+              child: const Text("PDF"),
+            ),
+          ],
+        ),
+      );
+    }
 
-  Future<void> exportToPDF() async {
-    final pdf = pw.Document();
-    pdf.addPage(
-      pw.Page(
-        build: (pw.Context context) {
-          return pw_widgets.TableHelper.fromTextArray(
-            headers: ["No", "Data Sensor", "Check-in", "Check-out"],
-            data: List.generate(filteredData.length, (i) {
-              return [
-                (i + 1).toString(),
-                filteredData[i]['sensor']!,
-                filteredData[i]['checkin']!,
-                filteredData[i]['checkout']!,
-              ];
-            }),
-          );
-        },
-      ),
-    );
-
-    await Printing.layoutPdf(onLayout: (format) async => pdf.save());
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF9DD7FA),
-      body: SafeArea(
-        child: Padding(
+      appBar: AppBar(
+        title: const Text('Laporan Data Sensor'),
+        actions: [
+          IconButton(icon: const Icon(Icons.download), onPressed: showExportDialog)
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Container(
           padding: const EdgeInsets.all(16),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text("Laporan Data Sensor",
-                            style: TextStyle(
-                                fontSize: 24, fontWeight: FontWeight.bold)),
-                        SizedBox(height: 4),
-                        Text("Laporan yang diambil setiap bulan"),
-                      ],
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.download, size: 28),
-                      onPressed: () => _showExportDialog(),
-                    )
-                  ],
-                ),
-                const SizedBox(height: 12),
-
-                // Search box
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        onChanged: (val) => setState(() => searchQuery = val),
-                        decoration: InputDecoration(
-                          hintText: "Cari",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          contentPadding:
-                              const EdgeInsets.symmetric(horizontal: 16),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        border: Border.all(),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(Icons.search),
-                    )
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // Table
-                Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Table(
-                    border: TableBorder.symmetric(
-                      inside: const BorderSide(width: 0.5),
-                      outside: const BorderSide(width: 1),
-                    ),
-                    columnWidths: const {
-                      0: FixedColumnWidth(40),
-                      1: FlexColumnWidth(2),
-                      2: FlexColumnWidth(2),
-                      3: FlexColumnWidth(2),
-                      4: FixedColumnWidth(60),
-                    },
-                    children: [
-                      // Header row
-                      const TableRow(
-                        decoration:
-                            BoxDecoration(color: Color(0xFFD6F0FF)),
-                        children: [
-                          TableCell(
-                              child: Center(
-                                  child: Text("No",
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold)))),
-                          TableCell(
-                              child: Center(
-                                  child: Text("Data Sensor",
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold)))),
-                          TableCell(
-                              child: Center(
-                                  child: Text("Check-in",
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold)))),
-                          TableCell(
-                              child: Center(
-                                  child: Text("Check-out",
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold)))),
-                          TableCell(
-                              child: Center(
-                                  child: Text("Delete",
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold)))),
-                        ],
-                      ),
-                      ...filteredData.asMap().entries.map((entry) {
-                        int i = entry.key;
-                        var row = entry.value;
-                        return TableRow(
-                          children: [
-                            Center(child: Text("${i + 1}")),
-                            Center(child: Text(row['sensor']!)),
-                            Center(child: Text(row['checkin']!)),
-                            Center(child: Text(row['checkout']!)),
-                            Center(
-                              child: IconButton(
-                                icon: const Icon(Icons.delete),
-                                onPressed: () {
-                                  setState(() {
-                                    sensorData.remove(row);
-                                  });
-                                },
-                              ),
-                            ),
-                          ],
-                        );
-                      }),
-                    ],
-                  ),
-                )
-              ],
-            ),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Consumer<MQTTProvider>(
+            builder: (context, provider, child) {
+              return DataTable(
+                columns: const [
+                  DataColumn(label: Text("Waktu")),
+                  DataColumn(label: Text("pH")),
+                  DataColumn(label: Text("Suhu")),
+                  DataColumn(label: Text("DO")), 
+                  DataColumn(label: Text("Level")),
+                ],
+                rows: provider.logHistory.map((log) => DataRow(cells: [
+                      DataCell(Text(DateFormat('HH:mm:ss').format(log.timestamp))),
+                      DataCell(Text(log.ph.toStringAsFixed(1))),
+                      DataCell(Text(log.suhu.toStringAsFixed(1))),
+                      DataCell(Text(log.doValue.toStringAsFixed(1))), 
+                      DataCell(Text(log.waterLevel.toStringAsFixed(0))),
+                    ])).toList(),
+              );
+            },
           ),
         ),
-      ),
-    );
-  }
-
-  void _showExportDialog() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text("Ekspor Data"),
-        content: const Text("Pilih format file yang ingin diunduh."),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              exportToCSV();
-            },
-            child: const Text("CSV"),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              exportToPDF();
-            },
-            child: const Text("PDF"),
-          ),
-        ],
       ),
     );
   }
